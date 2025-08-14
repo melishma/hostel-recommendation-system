@@ -1,7 +1,6 @@
 <?php
 session_start();
 
-// Access Control
 if (!isset($_SESSION["admin_logged_in"])) {
     header("Location: admin_login.php");
     exit;
@@ -12,22 +11,19 @@ require_once '../config.php';
 $admin_role = $_SESSION["admin_role"];
 $admin_hostel_id = $_SESSION["assigned_hostel_id"];
 
-// Handle deletion — super_admin only
 if (isset($_GET['delete']) && $admin_role === 'super_admin') {
     $id = (int)$_GET['delete'];
 
-    // Optional: delete related images & features
     $stmt = $conn->prepare("SELECT image_url FROM hostels WHERE id = ?");
     $stmt->bind_param("i", $id);
     $stmt->execute();
     $res = $stmt->get_result();
     if ($hostel = $res->fetch_assoc()) {
-        // Delete main image
+      
         if (!empty($hostel['image_url']) && file_exists("../" . $hostel['image_url'])) {
             unlink("../" . $hostel['image_url']);
         }
 
-        // Delete additional images
         $imgs = $conn->prepare("SELECT image_path FROM hostel_images WHERE hostel_id = ?");
         $imgs->bind_param("i", $id);
         $imgs->execute();
@@ -47,7 +43,7 @@ if (isset($_GET['delete']) && $admin_role === 'super_admin') {
     exit;
 }
 
-// Fetch hostels
+
 if ($admin_role === "super_admin") {
     $hostels = $conn->query("SELECT * FROM hostels ORDER BY created_at DESC");
 } else {

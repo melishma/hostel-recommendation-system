@@ -9,7 +9,6 @@ if (!isset($_SESSION["admin_logged_in"])) {
 }
 require_once '../config.php';
 
-// Delete review if requested
 if (isset($_GET['delete_id'])) {
     $delete_id = intval($_GET['delete_id']);
     $conn->query("DELETE FROM hostel_reviews WHERE id = $delete_id");
@@ -17,7 +16,7 @@ if (isset($_GET['delete_id'])) {
     exit;
 }
 
-// Fetch all reviews
+
 $sql = "SELECT r.id, r.rating, r.review, r.created_at, u.name AS student_name, h.name AS hostel_name
         FROM hostel_reviews r
         JOIN users u ON r.user_id = u.id

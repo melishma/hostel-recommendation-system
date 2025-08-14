@@ -8,7 +8,7 @@ if (!isset($_SESSION["user_id"])) {
 require_once 'config.php';
 $user_id = $_SESSION["user_id"];
 
-// Fetch all bookings made by the logged-in user, including status
+
 $stmt = $conn->prepare("SELECT bookings.id, hostels.name AS hostel_name, bookings.student_name, bookings.student_email, bookings.student_phone, bookings.duration, bookings.booking_date, bookings.status FROM bookings INNER JOIN hostels ON bookings.hostel_id = hostels.id WHERE bookings.user_id = ?");
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
@@ -103,7 +103,7 @@ $result = $stmt->get_result();
                                 ?>
                             </td>
                             <td>
-                                <!-- Cancel Booking Button -->
+                                
                                 <form action="cancel_booking.php" method="POST" style="display:inline;">
                                     <input type="hidden" name="booking_id" value="<?= $booking['id'] ?>">
                                     <button type="submit" class="cancel-btn">Cancel</button>

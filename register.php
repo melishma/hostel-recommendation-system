@@ -5,15 +5,16 @@ $message = "";
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $name = trim($_POST["name"]);
     $email = trim($_POST["email"]);
+    $location = trim($_POST["location"]);
     $password = $_POST["password"];
     $confirm = $_POST["confirm"];
 
     if ($password !== $confirm) {
         $message = "Passwords do not match.";
     } else {
-        // Store password as plain text (not recommended for production)
-        $stmt = $conn->prepare("INSERT INTO users (name, email, password) VALUES (?, ?, ?)");
-        $stmt->bind_param("sss", $name, $email, $password);
+        
+        $stmt = $conn->prepare("INSERT INTO users (name, email, password, location) VALUES (?, ?, ?, ?)");
+        $stmt->bind_param("ssss", $name, $email, $password, $location);
 
         if ($stmt->execute()) {
             header("Location: login.php");
@@ -99,6 +100,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <form method="POST">
         <input type="text" name="name" placeholder="Full Name" required>
         <input type="email" name="email" placeholder="Email" required>
+        <input type="text" name="location" placeholder="Location" required>
         <input type="password" name="password" placeholder="Password" required>
         <input type="password" name="confirm" placeholder="Confirm Password" required>
         <button type="submit">Register</button>

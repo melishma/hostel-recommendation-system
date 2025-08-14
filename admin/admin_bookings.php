@@ -13,7 +13,6 @@ $error = '';
 
 
 
-// Handle approve/reject
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action'], $_POST['booking_id'])) {
     $booking_id = intval($_POST['booking_id']);
     $action = $_POST['action'];
@@ -29,7 +28,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action'], $_POST['boo
     } else {
         $hostel_id = $booking['hostel_id'];
 
-        // Only allow hostel admin to update their assigned hostel bookings
         if ($admin_role !== 'super_admin' && $admin_hostel_id != $hostel_id) {
             $error = "Unauthorized action.";
         } else {
@@ -60,7 +58,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST['action'], $_POST['boo
     }
 }
 
-// Fetch bookings
+
 $sql = "SELECT b.id, u.name AS student_name, u.email, h.id AS hostel_id, h.name AS hostel_name, h.capacity, b.booking_date, b.status
         FROM bookings b
         JOIN users u ON b.user_id = u.id
@@ -73,7 +71,7 @@ if ($admin_role !== 'super_admin') {
 $sql .= " ORDER BY h.name, b.booking_date DESC";
 $result = $conn->query($sql);
 
-// Fetch capacity status
+
 $capacity_sql = "SELECT h.id, h.name, h.capacity, COUNT(b.id) AS current_bookings
                  FROM hostels h
                  LEFT JOIN bookings b ON h.id = b.hostel_id AND b.status = 'approved'";
@@ -244,7 +242,7 @@ while ($row = $capacity_result->fetch_assoc()) {
         </tbody>
     </table>
 
-    <!-- Booking Summary -->
+    
     <h3 style="margin-top:40px;">Hostel Booking Summary</h3>
     <table>
         <thead>

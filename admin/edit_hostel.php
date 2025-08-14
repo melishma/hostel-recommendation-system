@@ -7,7 +7,7 @@ if (!isset($_SESSION["admin_logged_in"])) {
     exit;
 }
 
-// CSRF token setup
+
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
@@ -17,7 +17,7 @@ $admin_hostel_id = $_SESSION["assigned_hostel_id"];
 $id = intval($_GET['id'] ?? 0);
 $message = "";
 
-// Fetch hostel
+
 $stmt = $conn->prepare("SELECT * FROM hostels WHERE id = ?");
 $stmt->bind_param("i", $id);
 $stmt->execute();
@@ -31,13 +31,13 @@ if ($admin_role !== 'super_admin' && $hostel['id'] != $admin_hostel_id) {
     die("Unauthorized access.");
 }
 
-// Fetch images
+
 $image_stmt = $conn->prepare("SELECT * FROM hostel_images WHERE hostel_id = ?");
 $image_stmt->bind_param("i", $id);
 $image_stmt->execute();
 $existing_images = $image_stmt->get_result();
 
-// Fetch all features
+
 $all_features_result = $conn->query("SELECT * FROM features");
 $selected_stmt = $conn->prepare("SELECT feature_id FROM hostel_features WHERE hostel_id = ?");
 $selected_stmt->bind_param("i", $id);
@@ -49,7 +49,7 @@ while ($row = $selected_result->fetch_assoc()) {
 }
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    // CSRF Check
+  
     if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
         die("Invalid CSRF token");
     }
@@ -64,7 +64,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if ($price < 0 || $capacity < 1) {
         $message = "Invalid data entered.";
     } else {
-        // Handle main image
+        
         if (!empty($_FILES["main_image"]["name"])) {
             $mainImage = $_FILES["main_image"];
             $allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
@@ -89,12 +89,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             }
         }
 
-        // Update hostel info
+        
         $update = $conn->prepare("UPDATE hostels SET name=?, location=?, price=?, capacity=?, description=?, image_url=? WHERE id=?");
         $update->bind_param("ssdissi", $name, $location, $price, $capacity, $description, $mainImagePath, $id);
 
         if ($update->execute()) {
-            // Handle additional images
+           
             if (!empty($_FILES["images"]["name"][0])) {
                 foreach ($_FILES["images"]["tmp_name"] as $index => $tmpName) {
                     if (!in_array(mime_content_type($tmpName), $allowedTypes)) continue;
@@ -110,7 +110,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 }
             }
 
-            // Update features
             $conn->query("DELETE FROM hostel_features WHERE hostel_id = $id");
             if (!empty($_POST['features'])) {
                 $insert = $conn->prepare("INSERT INTO hostel_features (hostel_id, feature_id) VALUES (?, ?)");
@@ -167,7 +166,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 .feature-item {
     display: flex;
     align-items: center;
-    width: 45%; /* You can change this to 50% or 30% for different column layouts */
+    width: 45%;
 }
 
         button {

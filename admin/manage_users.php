@@ -1,7 +1,6 @@
 <?php 
 session_start();
 
-// Redirect to login if not authenticated
 if (!isset($_SESSION["admin_logged_in"])) {
     header("Location: admin_login.php");
     exit;
@@ -12,11 +11,10 @@ require_once '../config.php';
 $admin_role = $_SESSION["admin_role"];
 $admin_id = $_SESSION["admin_id"] ?? null;
 
-// Handle deletion - Super Admins only
+
 if (isset($_GET['delete_id']) && $admin_role === 'super_admin') {
     $delete_id = intval($_GET['delete_id']);
 
-    // Fetch role from admins for the user to delete (if admin)
     $stmt = $conn->prepare("
         SELECT role FROM admins WHERE id = ?
         UNION
@@ -30,27 +28,27 @@ if (isset($_GET['delete_id']) && $admin_role === 'super_admin') {
 
     $role_to_delete = $row['role'] ?? 'user';
 
-    // Prevent deleting super_admins and self
+   
     if (strtolower($role_to_delete) !== 'super_admin' && $delete_id !== $admin_id) {
-        // Delete bookings first
+       
         if ($role_to_delete === 'admin') {
-            // Delete hostels managed by this admin (if needed)
+            
             $stmt = $conn->prepare("UPDATE hostels SET admin_id = NULL WHERE admin_id = ?");
             $stmt->bind_param("i", $delete_id);
             $stmt->execute();
         
-            // Delete from admins table
+        
             $stmt = $conn->prepare("DELETE FROM admins WHERE id = ?");
             $stmt->bind_param("i", $delete_id);
             $stmt->execute();
         
         } else {
-            // Delete bookings first
+           
             $stmt1 = $conn->prepare("DELETE FROM bookings WHERE user_id = ?");
             $stmt1->bind_param("i", $delete_id);
             $stmt1->execute();
         
-            // Then delete user
+            
             $stmt2 = $conn->prepare("DELETE FROM users WHERE id = ?");
             $stmt2->bind_param("i", $delete_id);
             $stmt2->execute();

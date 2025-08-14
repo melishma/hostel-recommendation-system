@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once '../config.php'; // Adjust path if needed
+require_once '../config.php'; 
 
 $error = "";
 
@@ -8,7 +8,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $email = trim($_POST["email"]);
     $password = trim($_POST["password"]);
 
-    // Get admin details
+  
     $stmt = $conn->prepare("SELECT id, name, email, password, role, assigned_hostel_id FROM admins WHERE email = ?");
 
     $stmt->bind_param("s", $email);
@@ -17,8 +17,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $admin = $result->fetch_assoc();
     
 
-
-    // Compare plain text password (⚠️ Not secure)
     if ($admin && $password === $admin['password']) {
         $_SESSION["admin_logged_in"] = true;
         $_SESSION["admin_id"] = $admin["id"];

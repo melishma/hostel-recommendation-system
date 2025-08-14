@@ -9,14 +9,14 @@ require_once 'config.php';
 $user_id = $_SESSION["user_id"];
 $booking_id = $_POST['booking_id'] ?? 0;
 
-// Ensure the booking belongs to the logged-in user
+
 $stmt = $conn->prepare("SELECT * FROM bookings WHERE id = ? AND user_id = ?");
 $stmt->bind_param("ii", $booking_id, $user_id);
 $stmt->execute();
 $booking = $stmt->get_result()->fetch_assoc();
 
 if ($booking) {
-    // Proceed to delete the booking
+    
     $stmt = $conn->prepare("DELETE FROM bookings WHERE id = ?");
     $stmt->bind_param("i", $booking_id);
     if ($stmt->execute()) {

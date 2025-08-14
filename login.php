@@ -7,7 +7,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $email = trim($_POST["email"]);
     $password = $_POST["password"];
 
-    // Prepare statement to prevent SQL injection
     $stmt = $conn->prepare("SELECT id, name, password, role FROM users WHERE email = ?");
     $stmt->bind_param("s", $email);
     $stmt->execute();
@@ -17,13 +16,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $stmt->bind_result($id, $name, $hashed_password, $role);
         $stmt->fetch();
 
-        // If using hashed passwords, use password_verify()
         if ($password === $hashed_password) {
             $_SESSION["user_id"] = $id;
             $_SESSION["user_name"] = $name;
             $_SESSION["user_role"] = $role;
 
-            // Redirect based on role
             if ($role === 'admin') {
                 header("Location: admin/admin_login.php");
             } else {
@@ -43,6 +40,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <html>
 <head>
     <title>Login - HostelNow</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body {
             font-family: 'Segoe UI', sans-serif;
@@ -99,6 +97,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         .login-box .register-link a:hover {
             text-decoration: underline;
         }
+        .admin-link {
+            text-align: center;
+            margin-top: 10px;
+        }
+        .admin-link a {
+            font-size: 14px;
+            color: #555;
+            text-decoration: none;
+        }
+        .admin-link a:hover {
+            text-decoration: underline;
+        }
         .message {
             color: red;
             text-align: center;
@@ -118,6 +128,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     </form>
     <div class="register-link">
         Don't have an account? <a href="register.php">Register</a>
+    </div>
+    <div class="admin-link">
+        <a href="admin/admin_login.php"><i class="fas fa-lock"></i> Admin Login</a>
     </div>
 </div>
 

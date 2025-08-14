@@ -7,7 +7,6 @@ if (!isset($_GET['hostel_id']) || !is_numeric($_GET['hostel_id'])) {
 } else {
     $hostel_id = intval($_GET['hostel_id']);
 
-    // Check if hostel exists (only once)
     $stmt = $conn->prepare("SELECT * FROM hostels WHERE id = ?");
     $stmt->bind_param("i", $hostel_id);
     $stmt->execute();
@@ -18,7 +17,6 @@ if (!isset($_GET['hostel_id']) || !is_numeric($_GET['hostel_id'])) {
     } else {
         $hostel = $result->fetch_assoc();
 
-        // Make sure user is logged in
         if (!isset($_SESSION["user_id"])) {
             $error_message = "You must be logged in to book a hostel.";
         } else {
@@ -31,34 +29,41 @@ if (!isset($_GET['hostel_id']) || !is_numeric($_GET['hostel_id'])) {
 
             if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $student_phone = $_POST['student_phone'];
-                $duration = !empty($_POST['duration']) ? intval($_POST['duration']) : null;
+                $duration = isset($_POST['duration']) && $_POST['duration'] !== '' ? intval($_POST['duration']) : null;
 
-                $check = $conn->prepare("SELECT * FROM bookings WHERE hostel_id = ? AND user_id = ?");
-                $check->bind_param("ii", $hostel_id, $_SESSION["user_id"]);
-                $check->execute();
-                $existing = $check->get_result();
-
-                if ($existing->num_rows > 0) {
-                    $info_message = "You have already requested a booking for this hostel. Please wait for admin approval.";
+                if (!preg_match('/^\d{10}$/', $student_phone)) {
+                    $error_message = "Please enter a valid 10-digit phone number.";
+                } elseif ($duration !== null && $duration <= 0) {
+                    $error_message = "If provided, duration must be a positive number of days.";
                 } else {
-                    // Check approved bookings count
-                    $count_stmt = $conn->prepare("SELECT COUNT(*) as approved_count FROM bookings WHERE hostel_id = ? AND status = 'approved'");
-                    $count_stmt->bind_param("i", $hostel_id);
-                    $count_stmt->execute();
-                    $count_stmt->bind_result($approved_count);
-                    $count_stmt->fetch();
-                    $count_stmt->close();
+                    
+                    $check = $conn->prepare("SELECT * FROM bookings WHERE user_id = ?");
+                    $check->bind_param("i", $_SESSION["user_id"]);
+                    $check->execute();
+                    $existing = $check->get_result();
 
-                    if ($approved_count >= $hostel['capacity']) {
-                        $info_message = "Sorry, this hostel is fully booked. You cannot request a booking at this time.";
+                    if ($existing->num_rows > 0) {
+                        $info_message = "You have already requested a booking. Only one booking is allowed per user.";
                     } else {
-                        $stmt = $conn->prepare("INSERT INTO bookings (hostel_id, student_name, student_email, student_phone, duration, booking_date, user_id, status) VALUES (?, ?, ?, ?, ?, NOW(), ?, 'pending')");
-                        $stmt->bind_param("issssi", $hostel_id, $student_name, $student_email, $student_phone, $duration, $_SESSION["user_id"]);
+                        
+                        $count_stmt = $conn->prepare("SELECT COUNT(*) as approved_count FROM bookings WHERE hostel_id = ? AND status = 'approved'");
+                        $count_stmt->bind_param("i", $hostel_id);
+                        $count_stmt->execute();
+                        $count_stmt->bind_result($approved_count);
+                        $count_stmt->fetch();
+                        $count_stmt->close();
 
-                        if ($stmt->execute()) {
-                            $success_message = "Booking request submitted successfully! Please wait for admin approval.";
+                        if ($approved_count >= $hostel['capacity']) {
+                            $info_message = "Sorry, this hostel is fully booked. You cannot request a booking at this time.";
                         } else {
-                            $error_message = "Error: " . $stmt->error;
+                            $stmt = $conn->prepare("INSERT INTO bookings (hostel_id, student_name, student_email, student_phone, duration, booking_date, user_id, status) VALUES (?, ?, ?, ?, ?, NOW(), ?, 'pending')");
+                            $stmt->bind_param("issssi", $hostel_id, $student_name, $student_email, $student_phone, $duration, $_SESSION["user_id"]);
+
+                            if ($stmt->execute()) {
+                                $success_message = "Booking request submitted successfully! Please wait for admin approval.";
+                            } else {
+                                $error_message = "Error: " . $stmt->error;
+                            }
                         }
                     }
                 }
@@ -133,10 +138,7 @@ if (!isset($_GET['hostel_id']) || !is_numeric($_GET['hostel_id'])) {
             align-items: center;
             gap: 15px;
         }
-        .message.success svg {
-            width: 48px;
-            height: 48px;
-        }
+       
         .back-link {
             background-color: #0f5132;
             color: white;
@@ -161,9 +163,7 @@ if (!isset($_GET['hostel_id']) || !is_numeric($_GET['hostel_id'])) {
             <a href="hostels.php" class="back-link">&larr; Back to Hostels</a>
         <?php elseif (!empty($success_message)): ?>
             <div class="message success">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="#0f5132" viewBox="0 0 16 16" aria-hidden="true">
-                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM7 10.793l5.146-5.147-.708-.708L7 9.379 4.854 7.232l-.708.707L7 10.793z"/>
-                </svg>
+            <p style="font-size: 70px;">✅</p>
                 <p><strong><?= htmlspecialchars($success_message) ?></strong></p>
                 <a href="hostels.php" class="back-link">&larr; Back to Hostels</a>
             </div>
@@ -176,8 +176,11 @@ if (!isset($_GET['hostel_id']) || !is_numeric($_GET['hostel_id'])) {
             <p><strong>Your Email:</strong> <?= htmlspecialchars($student_email) ?></p>
 
             <form method="POST">
-                <input type="text" name="student_phone" placeholder="Your Phone Number" required>
-                <input type="number" name="duration" placeholder="Duration (days)">
+                <input type="tel" name="student_phone" placeholder="Your Phone Number"
+                       pattern="\d{10}" maxlength="10" minlength="10"
+                       title="Enter a valid 10-digit phone number" required>
+
+                <input type="number" name="duration" placeholder="Duration (days)" min="1">
                 <button type="submit">Send Booking Request</button>
             </form>
 

@@ -1,24 +1,21 @@
 <?php
-// Start session safely
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Ensure admin is logged in
 if (!isset($_SESSION["admin_logged_in"])) {
     header("Location: admin_login.php");
     exit;
 }
 
-// Session variables
+
 $admin_name = $_SESSION["admin_name"] ?? "Admin";
 $admin_role = $_SESSION["admin_role"] ?? "admin";
 $admin_hostel_id = $_SESSION["assigned_hostel_id"] ?? null;
 
-// Config
 require_once '../config.php';
 
-// Count hostels
 if ($admin_role === 'super_admin') {
     $hostel_count = $conn->query("SELECT COUNT(*) as count FROM hostels")->fetch_assoc()['count'];
 } elseif ($admin_hostel_id !== null) {
@@ -31,9 +28,9 @@ if ($admin_role === 'super_admin') {
     $hostel_count = 0;
 }
 
-// Count users
+
 if ($admin_role === 'super_admin') {
-    // Removed WHERE role = 'user' because role is not in users table
+   
     $user_count = $conn->query("SELECT COUNT(*) as count FROM users")->fetch_assoc()['count'];
 } elseif ($admin_hostel_id !== null) {
     $stmt = $conn->prepare("
@@ -49,7 +46,7 @@ if ($admin_role === 'super_admin') {
     $user_count = 0;
 }
 
-// Hostel name for display (only for admins)
+
 $admin_hostel_name = null;
 if ($admin_role !== 'super_admin' && $admin_hostel_id) {
     $stmt = $conn->prepare("SELECT name FROM hostels WHERE id = ?");
@@ -256,7 +253,6 @@ if ($admin_role !== 'super_admin' && $admin_hostel_id) {
                 <?php if ($admin_role === 'super_admin'): ?>
                     <a href="manage_users.php">Manage Users</a>
                     <a href="assign_admins.php">Assign Admins</a>
-                    <a href="../logout.php">Logout</a>
                 <?php endif; ?>
                 <div class="profile-icon">
                     <i class="fa fa-user-circle" style="font-size: 30px;"></i>

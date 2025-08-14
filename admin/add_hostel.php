@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-// Only super admins can access
+
 if (!isset($_SESSION["admin_logged_in"]) || $_SESSION["admin_role"] !== 'super_admin') {
     header("Location: admin_login.php");
     exit;
@@ -11,7 +11,7 @@ require_once '../config.php';
 
 $message = "";
 
-// Get all features
+
 $features_result = $conn->query("SELECT * FROM features");
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
@@ -23,9 +23,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $selected_features = $_POST['features'] ?? [];
 
     $allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-    $maxSize = 2 * 1024 * 1024; // 2MB
+    $maxSize = 2 * 1024 * 1024; 
 
-    // Main image upload
     $main_image_url = null;
     if (isset($_FILES['main_image']) && $_FILES['main_image']['error'] === UPLOAD_ERR_OK) {
         if (!in_array($_FILES['main_image']['type'], $allowedTypes) || $_FILES['main_image']['size'] > $maxSize) {
@@ -43,7 +42,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $message = "Main image is required.";
     }
 
-    // Additional image uploads
     $uploadedPaths = [];
     if (isset($_FILES['images']) && empty($message)) {
         foreach ($_FILES['images']['tmp_name'] as $i => $tmpName) {
@@ -62,7 +60,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
     }
 
-    // Insert into DB
     if (empty($message)) {
         $stmt = $conn->prepare("INSERT INTO hostels (name, location, price, description, image_url, capacity) VALUES (?, ?, ?, ?, ?, ?)");
         $stmt->bind_param("ssdssi", $name, $location, $price, $description, $main_image_url, $capacity);
@@ -70,7 +67,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         if ($stmt->execute()) {
             $hostel_id = $conn->insert_id;
 
-            // Add features
+         
             if (!empty($selected_features)) {
                 $feature_stmt = $conn->prepare("INSERT INTO hostel_features (hostel_id, feature_id) VALUES (?, ?)");
                 foreach ($selected_features as $feature_id) {
@@ -79,7 +76,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 }
             }
 
-            // Add additional images
+            
             foreach ($uploadedPaths as $path) {
                 $img_stmt = $conn->prepare("INSERT INTO hostel_images (hostel_id, image_path) VALUES (?, ?)");
                 $img_stmt->bind_param("is", $hostel_id, $path);
@@ -150,7 +147,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             text-decoration: none;
         }
 
-        /* ──────── NEW: Features grid styling ──────── */
         .features-grid {
             display: flex;
             flex-wrap: wrap;
@@ -161,8 +157,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         .feature-item {
             display: flex;
             align-items: center;
-            width: 45%; /* two columns of roughly equal width */
-        }
+            width: 45%; 
         .feature-item input[type="checkbox"] {
             margin-right: 8px;
         }
@@ -182,11 +177,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             <input type="number" name="capacity" placeholder="Capacity" min="1" required>
             <textarea name="description" placeholder="Description" rows="4" maxlength="500" required></textarea>
 
-            <!-- ──────── UPDATED: Features section now uses .features-grid ──────── -->
+            
             <label>Hostel Features:</label>
             <div class="features-grid">
                 <?php
-                // Reset the result pointer and loop through features
+                
                 $features_result->data_seek(0);
                 while ($feature = $features_result->fetch_assoc()):
                 ?>
